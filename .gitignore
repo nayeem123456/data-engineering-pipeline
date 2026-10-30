@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+ENV/
+
+# Data & Lakehouse
+data/lakehouse/bronze/*
+!data/lakehouse/bronze/.gitkeep
+data/lakehouse/silver/*
+!data/lakehouse/silver/.gitkeep
+data/lakehouse/gold/*
+!data/lakehouse/gold/.gitkeep
+data/lakehouse/quarantine/*
+!data/lakehouse/quarantine/.gitkeep
+data/staging/*
+!data/staging/.gitkeep
+*.parquet
+*.csv.gz
+
+# Operational / Local DBs
+*.db
+*.sqlite
+*.sqlite3
+pgdata/
+
+# Logs & Monitoring
+logs/
+*.log
+
+# Pytest & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# dbt
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Environment Secrets
+.env
+.env.local

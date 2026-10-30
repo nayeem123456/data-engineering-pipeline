@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: silver
+    schema: silver
+    description: "Cleansed and deduplicated Silver Lakehouse source tables"
+    tables:
+      - name: orders
+        description: "Standardized e-commerce orders"
+      - name: order_items
+        description: "Individual line items for each order"
+      - name: customers
+        description: "Customer accounts and demographic profiles"
+      - name: products
+        description: "Product catalog and pricing"
+      - name: payments
+        description: "Payment capture and refund transactions"

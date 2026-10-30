@@ -1,0 +1,152 @@
+version: '3.8'
+
+x-airflow-common: &airflow-common
+  image: apache/airflow:2.8.1-python3.11
+  environment:
+    - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+    - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://lakehouse_admin:lakehouse_secure_pass_2026@postgres:5432/lakehouse_dw
+    - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqBpPo=
+    - AIRFLOW__CORE__LOAD_EXAMPLES=false
+    - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=false
+    - AIRFLOW__LOGGING__BASE_LOG_FOLDER=/opt/airflow/logs
+    - _PIP_ADDITIONAL_REQUIREMENTS=duckdb==0.10.0 pyarrow==15.0.0 pandas==2.2.0 pydantic==2.6.4
+    - PYTHONPATH=/app
+    - POSTGRES_HOST=postgres
+    - USE_SQLITE_METADATA_FALLBACK=false
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./src:/app/src
+    - ./data:/app/data
+    - ./schemas:/app/schemas
+    - ./sql:/app/sql
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: lakehouse-postgres
+    environment:
+      - POSTGRES_USER=lakehouse_admin
+      - POSTGRES_PASSWORD=lakehouse_secure_pass_2026
+      - POSTGRES_DB=lakehouse_dw
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/01_init_metadata_schema.sql:/docker-entrypoint-initdb.d/01_init_metadata_schema.sql:ro
+      - ./sql/02_init_gold_schema.sql:/docker-entrypoint-initdb.d/02_init_gold_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lakehouse_admin -d lakehouse_dw"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  airflow-init:
+    <<: *airflow-common
+    container_name: lakehouse-airflow-init
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate &&
+        airflow users create \
+          --username admin \
+          --password admin \
+          --firstname Data \
+          --lastname Platform \
+          --role Admin \
+          --email admin@lakehouse.local || true
+    restart: on-failure
+
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: lakehouse-airflow-webserver
+    command: webserver
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: lakehouse-airflow-scheduler
+    command: scheduler
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"']
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  lakehouse-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lakehouse-worker
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://lakehouse_admin:lakehouse_secure_pass_2026@postgres:5432/lakehouse_dw
+      - POSTGRES_HOST=postgres
+      - USE_SQLITE_METADATA_FALLBACK=false
+      - SPARK_MASTER=local[*]
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./src:/app/src
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", 'python -c "import duckdb, pyarrow, pandas, sqlalchemy; print(\"OK\")"']
+      interval: 15s
+      timeout: 10s
+      retries: 3
+    command: ["tail", "-f", "/dev/null"]
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lakehouse-dashboard
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://lakehouse_admin:lakehouse_secure_pass_2026@postgres:5432/lakehouse_dw
+      - POSTGRES_HOST=postgres
+      - USE_SQLITE_METADATA_FALLBACK=false
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./src:/app/src
+      - ./dashboard:/app/dashboard
+    command: ["streamlit", "run", "dashboard/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8501/_stcore/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local

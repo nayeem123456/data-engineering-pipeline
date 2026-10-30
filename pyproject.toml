@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=65.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lakehouse-etl-platform"
+version = "1.0.0"
+description = "Production-Style Data Lakehouse & ETL Platform with Medallion Architecture, PySpark, Airflow, dbt, and PostgreSQL"
+authors = [{ name = "Senior Data Engineer", email = "data-platform@example.com" }]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pyarrow>=15.0.0",
+    "pandas>=2.2.0",
+    "duckdb>=0.10.0",
+    "SQLAlchemy>=2.0.28",
+    "pydantic>=2.6.4",
+    "python-dateutil>=2.9.0",
+    "pyyaml>=6.0.1",
+    "rich>=13.7.1",
+    "streamlit>=1.32.2",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.1.1",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.3.4",
+]
+spark = [
+    "pyspark>=3.4.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["E501", "E402", "B008"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --durations=10"
+testpaths = ["tests"]
+pythonpath = ["."]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]

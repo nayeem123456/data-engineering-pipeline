@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LakehouseBronzeContract",
+  "description": "Bronze layer data contracts and expected source properties",
+  "entities": {
+    "orders": {
+      "required_columns": [
+        "order_id",
+        "customer_id",
+        "order_status",
+        "total_amount",
+        "created_at"
+      ],
+      "optional_columns": [
+        "subtotal_amount",
+        "tax_amount",
+        "shipping_amount",
+        "discount_amount",
+        "currency",
+        "updated_at",
+        "payment_method",
+        "shipping_address_city",
+        "shipping_address_state"
+      ],
+      "natural_key": "order_id",
+      "timestamp_field": "updated_at"
+    },
+    "order_items": {
+      "required_columns": [
+        "order_id",
+        "product_id",
+        "quantity",
+        "unit_price"
+      ],
+      "optional_columns": [
+        "item_id",
+        "total_price",
+        "created_at"
+      ],
+      "natural_key": "order_id",
+      "timestamp_field": "created_at"
+    },
+    "customers": {
+      "required_columns": [
+        "customer_id",
+        "email",
+        "signup_date"
+      ],
+      "optional_columns": [
+        "first_name",
+        "last_name",
+        "city",
+        "state",
+        "country",
+        "customer_segment",
+        "is_active",
+        "updated_at"
+      ],
+      "natural_key": "customer_id",
+      "timestamp_field": "updated_at"
+    },
+    "products": {
+      "required_columns": [
+        "product_id",
+        "product_name",
+        "category",
+        "retail_price"
+      ],
+      "optional_columns": [
+        "brand",
+        "cost_price",
+        "status",
+        "created_at",
+        "updated_at"
+      ],
+      "natural_key": "product_id",
+      "timestamp_field": "updated_at"
+    },
+    "payments": {
+      "required_columns": [
+        "payment_id",
+        "order_id",
+        "amount",
+        "payment_status",
+        "created_at"
+      ],
+      "optional_columns": [
+        "payment_method",
+        "is_refund",
+        "gateway_transaction_id"
+      ],
+      "natural_key": "payment_id",
+      "timestamp_field": "created_at"
+    },
+    "events": {
+      "required_columns": [
+        "event_id",
+        "event_type",
+        "timestamp"
+      ],
+      "optional_columns": [
+        "customer_id",
+        "session_id",
+        "product_id",
+        "page_url",
+        "device_type"
+      ],
+      "natural_key": "event_id",
+      "timestamp_field": "timestamp"
+    }
+  }
+}

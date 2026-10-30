@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LakehouseSilverContract",
+  "description": "Silver layer conformed schema constraints, data types, and cleansing rules",
+  "entities": {
+    "orders": {
+      "business_key": "order_id",
+      "deduplication_order": ["updated_at DESC", "_ingested_at DESC"],
+      "columns": {
+        "order_id": {"type": "string", "nullable": false},
+        "customer_id": {"type": "string", "nullable": false},
+        "order_status": {"type": "string", "nullable": false, "enum": ["COMPLETED", "PROCESSING", "SHIPPED", "CANCELLED", "REFUNDED"]},
+        "currency": {"type": "string", "nullable": false, "default": "USD"},
+        "subtotal_amount": {"type": "float", "nullable": false, "min": 0.0},
+        "tax_amount": {"type": "float", "nullable": false, "min": 0.0, "default": 0.0},
+        "shipping_amount": {"type": "float", "nullable": false, "min": 0.0, "default": 0.0},
+        "discount_amount": {"type": "float", "nullable": false, "min": 0.0, "default": 0.0},
+        "total_amount": {"type": "float", "nullable": false, "min": 0.0},
+        "created_at": {"type": "timestamp", "nullable": false},
+        "updated_at": {"type": "timestamp", "nullable": false}
+      }
+    },
+    "order_items": {
+      "business_key": "order_item_sk",
+      "composite_key": ["order_id", "product_id"],
+      "columns": {
+        "order_id": {"type": "string", "nullable": false},
+        "product_id": {"type": "string", "nullable": false},
+        "quantity": {"type": "integer", "nullable": false, "min": 1},
+        "unit_price": {"type": "float", "nullable": false, "min": 0.0},
+        "total_price": {"type": "float", "nullable": false, "min": 0.0},
+        "created_at": {"type": "timestamp", "nullable": false}
+      }
+    },
+    "customers": {
+      "business_key": "customer_id",
+      "deduplication_order": ["updated_at DESC", "_ingested_at DESC"],
+      "columns": {
+        "customer_id": {"type": "string", "nullable": false},
+        "first_name": {"type": "string", "nullable": true},
+        "last_name": {"type": "string", "nullable": true},
+        "email": {"type": "string", "nullable": false, "format": "email"},
+        "city": {"type": "string", "nullable": true},
+        "state": {"type": "string", "nullable": true},
+        "country": {"type": "string", "nullable": true, "default": "USA"},
+        "customer_segment": {"type": "string", "nullable": false, "enum": ["VIP", "REGULAR", "NEW", "DORMANT"], "default": "REGULAR"},
+        "signup_date": {"type": "date", "nullable": false},
+        "is_active": {"type": "boolean", "nullable": false, "default": true},
+        "created_at": {"type": "timestamp", "nullable": true},
+        "updated_at": {"type": "timestamp", "nullable": true, "default": "now"}
+      }
+    },
+    "products": {
+      "business_key": "product_id",
+      "deduplication_order": ["updated_at DESC", "_ingested_at DESC"],
+      "columns": {
+        "product_id": {"type": "string", "nullable": false},
+        "product_name": {"type": "string", "nullable": false},
+        "category": {"type": "string", "nullable": false},
+        "brand": {"type": "string", "nullable": true},
+        "cost_price": {"type": "float", "nullable": false, "min": 0.0},
+        "retail_price": {"type": "float", "nullable": false, "min": 0.0},
+        "price_band": {"type": "string", "nullable": false},
+        "status": {"type": "string", "nullable": false, "enum": ["ACTIVE", "DISCONTINUED", "OUT_OF_STOCK"], "default": "ACTIVE"},
+        "created_at": {"type": "timestamp", "nullable": true},
+        "updated_at": {"type": "timestamp", "nullable": true, "default": "now"}
+      }
+    },
+    "payments": {
+      "business_key": "payment_id",
+      "deduplication_order": ["created_at DESC", "_ingested_at DESC"],
+      "columns": {
+        "payment_id": {"type": "string", "nullable": false},
+        "order_id": {"type": "string", "nullable": false},
+        "payment_method": {"type": "string", "nullable": false, "enum": ["CREDIT_CARD", "PAYPAL", "APPLE_PAY", "BANK_TRANSFER"]},
+        "payment_status": {"type": "string", "nullable": false, "enum": ["CAPTURED", "PENDING", "FAILED", "REFUNDED"]},
+        "amount": {"type": "float", "nullable": false, "min": 0.0},
+        "is_refund": {"type": "boolean", "nullable": false, "default": false},
+        "created_at": {"type": "timestamp", "nullable": false}
+      }
+    }
+  }
+}

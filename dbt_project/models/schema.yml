@@ -1,0 +1,91 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: "Customer dimensional model with demographic profile and segment"
+    columns:
+      - name: customer_sk
+        description: "Surrogate key MD5(customer_id)"
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: "Natural business key"
+        tests:
+          - unique
+          - not_null
+      - name: email
+        tests:
+          - not_null
+      - name: customer_segment
+        tests:
+          - accepted_values:
+              values: ['VIP', 'REGULAR', 'NEW', 'DORMANT']
+
+  - name: dim_products
+    description: "Product catalog dimension"
+    columns:
+      - name: product_sk
+        tests:
+          - unique
+          - not_null
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+      - name: price_band
+        tests:
+          - accepted_values:
+              values: ['BUDGET', 'MID_RANGE', 'PREMIUM', 'LUXURY']
+
+  - name: fact_orders
+    description: "Orders fact table at the order grain"
+    columns:
+      - name: order_sk
+        tests:
+          - unique
+          - not_null
+      - name: customer_sk
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_sk
+      - name: total_amount
+        tests:
+          - not_null
+
+  - name: fact_order_items
+    description: "Order line items fact table"
+    columns:
+      - name: order_item_sk
+        tests:
+          - unique
+          - not_null
+      - name: order_sk
+        tests:
+          - not_null
+          - relationships:
+              to: ref('fact_orders')
+              field: order_sk
+      - name: product_sk
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_products')
+              field: product_sk
+
+  - name: mart_daily_sales
+    description: "Daily aggregated business sales and reconciliation mart"
+    columns:
+      - name: date_key
+        tests:
+          - unique
+          - not_null
+      - name: sale_date
+        tests:
+          - unique
+          - not_null
+      - name: gross_revenue
+        tests:
+          - not_null
